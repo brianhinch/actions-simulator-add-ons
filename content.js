@@ -1,46 +1,98 @@
-const CONTINUOUS_LISTEN_PERIOD = 1000;
+const POLLING_INTERVAL = 1000;
 
-let hContinuousListenInterval;
+let enableAutoInvokeChipClicked = false;
+let forceSmartSpeakerOptionClicked = false;
 
-const addListeners = () => {
-    console.debug('Actions Simulator Add-ons: addListeners');
-    if (hContinuousListenInterval) clearInterval(hContinuousListenInterval);
-    hContinuousListenInterval = setInterval(() => {
-        console.debug('Checking simulator state...');
-        let closeMicButton = $('div[ng-show="$ctrl.micOpen"]');
+const handlers = {
+    enableContinuousListen: function () {
+        // console.debug('enableContinuousListen: Checking simulator state...');
+        const closeMicButton = $('div[ng-show="$ctrl.micOpen"]');
         if (closeMicButton?.length <= 0 || closeMicButton?.[0]?.ariaHidden == 'true') {
-            console.debug('simulator is in standby mode');
+            // console.debug('simulator mic is in standby mode');
             $('button[aria-label="Speak your query"]').click();
         } else {
-            console.debug('simulator is in listen mode');
+            console.debug('simulator mic is listening');
         }
-    }, CONTINUOUS_LISTEN_PERIOD);
+    },
+    enableAutoInvoke: function () {
+        // console.debug('enableAutoInvoke: Checking simulator state...');
+        const zeroStateContainerItems = $('div[ng-if="$ctrl.isZeroState"] li');
+        if (zeroStateContainerItems?.length > 0 && !enableAutoInvokeChipClicked) {
+            // console.debug('simulator is not running an agent');
+            for (let item of zeroStateContainerItems) {
+                if (item?.textContent.startsWith('Type or say')) {
+                    const pattern = /".*?"/g;
+                    const found = pattern.exec(item.textContent);
+                    console.debug(found[0]);
+                    const chipButton = $('div:contains(' + found + ') ~ button.fb-chip-action');
+                    if (chipButton) chipButton.click();
+                }
+            }
+        } else {
+            console.debug('simulator is running an agent');
+            enableAutoInvokeChipClicked = false;
+            forceSmartSpeakerOptionClicked = false;
+        }
+    },
+    forceSmartSpeaker: function () {
+        const surfaceSmartSpeakerOption = $('div.fb-option-single-select-item:contains("Speaker (e.g. Google Home)")');
+        if (surfaceSmartSpeakerOption?.length > 0 && !forceSmartSpeakerOptionClicked) {
+            surfaceSmartSpeakerOption.click();
+            forceSmartSpeakerOptionClicked = true;
+        } else {
+            const surfaceDropdown = $('fb-select[name="surface"] button.fb-select-value');
+            if (surfaceDropdown?.length > 0) {
+                if (surfaceDropdown.text().indexOf('Speaker') < 0) {
+                    surfaceDropdown.click();
+                    forceSmartSpeakerOptionClicked = false;
+                }
+            }
+        }
+    }
+
 }
 
-const removeListeners = () => {
-    console.debug('Actions Simulator Add-ons: removeListeners');
-    if (hContinuousListenInterval) clearInterval(hContinuousListenInterval);
-    hContinuousListenInterval = null;
+let hIntervals = {};
+
+const start = function (key) {
+    console.debug(`Actions Simulator Add-ons: start: ${key}`);
+    stop(key);
+    hIntervals[key] = setInterval(handlers[key], POLLING_INTERVAL);
+};
+
+const stop = function (key) {
+    if (hIntervals[key] !== undefined) {
+        console.debug(`Actions Simulator Add-ons: stop: ${key}`);
+        clearInterval(hIntervals[key]);
+        hIntervals[key] = undefined;
+    }
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.command === 'init') {
-        addListeners();
-    } else {
-        removeListeners();
+    console.debug('Actions Simulator Add-ons: received message from popup: ', request);
+    if (request.command === 'settingChange') {
+        if (request.value) {
+            start(request.settingsKey);
+        } else {
+            stop(request.settingsKey);
+        }
     }
     sendResponse({ result: "success" });
 });
 
-const init = () => {
+const init = function () {
     console.debug('Actions Simulator Add-ons running');
     console.debug('Checking storage...');
-    chrome.storage.sync.get('enableContinuousListen', function (data) {
-        if (data.enableContinuousListen) {
-            addListeners();
-        } else {
-            removeListeners();
-        }
+    Object.keys(handlers).forEach(function (settingsKey) {
+        console.debug('key == ' + settingsKey + '...');
+        chrome.storage.sync.get(settingsKey, function (data) {
+            console.debug('key == ' + settingsKey, 'data ==', data);
+            if (data[settingsKey]) {
+                start(settingsKey);
+            } else {
+                stop(settingsKey);
+            }
+        })
     });
 }
 

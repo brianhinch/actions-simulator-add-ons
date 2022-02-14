@@ -3,9 +3,10 @@
 
 <head>
   <style>
+    html,
     body {
-      width: 80px;
-      text-align: center;
+      min-width: 300px;
+      text-align: left;
     }
 
     input {
@@ -14,16 +15,54 @@
       outline: none;
     }
 
+    .field {
+      display: flex;
+    }
+
+    .field label {
+      margin: auto 0;
+    }
+
     label {
-      width: 50px;
       font-weight: bold;
+    }
+
+    h1 {
+      font-size: 14px;
+      padding-left: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 1rem;
+    }
+
+    sub {
+      display: block;
+      text-align: right;
     }
   </style>
 </head>
 
 <body>
-  <input type="checkbox" id="enableContinuousListen"></input>
-  <label for="enableContinuousListen">Continuous listen mode</label>
+
+  <h1>Google Actions Simulator Add-ons</h1>
+
+  <div class="field">
+    <input type="checkbox" id="enableContinuousListen"></input>
+    <label for="enableContinuousListen">Continuous listen mode</label>
+  </div>
+
+  <div class="field">
+    <input type="checkbox" id="enableAutoInvoke"></input>
+    <label for="enableAutoInvoke">Auto-invoke agent</label>
+  </div>
+
+  <div class="field">
+    <input type="checkbox" id="forceSmartSpeaker"></input>
+    <label for="forceSmartSpeaker">Force smart speaker mode</label>
+  </div>
+
+  <sub><a target="_blank" href="https://github.com/brianhinch/actions-simulator-add-ons">About</a></sub>
+
   <script src="popup.js"></script>
 </body>
 
