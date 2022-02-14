@@ -1,6 +1,12 @@
 chrome.runtime.onInstalled.addListener(function () {
-  chrome.storage.sync.set({ enableContinuousListen: true }, function () {
-    console.log("Actions Simulator Continuous Listen enabled");
+  console.log("Actions Simulator Add-ons installed. Setting up preference storage...");
+  const defaultPrefs = {
+    enableContinuousListen: false,
+    enableAutoInvoke: false
+  };
+  chrome.storage.sync.set(defaultPrefs, function () {
+    console.log("Actions Simulator Add-ons preference storage initialized:");
+    console.log(defaultPrefs);
   });
 });
 

@@ -1,31 +1,34 @@
+console.log('Actions Simulator Add-ons: Popup initialized');
+document.body.addEventListener('click', console.log);
 
-
-var enableContinuousListen = document.getElementById('enableContinuousListen');
-
-chrome.storage.sync.get('enableContinuousListen', function (data) {
-  enableContinuousListen.checked = data.enableContinuousListen;
-});
-
-enableContinuousListen.onchange = function (element) {
-  let value = this.checked;
-
-  chrome.storage.sync.set({ 'enableContinuousListen': value }, function () {
-    console.debug('enableContinuousListen == ' + value);
+const bindSetting = function (settingsKey, checkbox) {
+  console.log('Actions Simulator Add-ons: bindSetting ' + settingsKey);
+  chrome.storage.sync.get(settingsKey, function (data) {
+    console.log('Get settings: ' + settingsKey + ' == ' + data[settingsKey]);
+    checkbox.checked = data[settingsKey];
   });
+  checkbox.addEventListener('change', function (e) {
+    let value = e.target.checked;
 
-  if (value) {
+    chrome.storage.sync.set({ [settingsKey]: value }, function () {
+      console.log('Set settings: ' + settingsKey + ' == ' + value);
+    });
+
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { command: "init", enableContinuousListen: value }, function (response) {
-        console.debug(response.result);
+      const message = { command: "settingChange", settingsKey: settingsKey, value: value };
+      console.log('Actions Simulator Add-ons: sending message:', message)
+      chrome.tabs.sendMessage(tabs[0].id, message, function (response) {
+        console.log(response);
       });
     });
-  } else {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { command: "remove", enableContinuousListen: value }, function (response) {
-        console.debug(response.result);
-      });
-    });
-  }
+  });
+}
 
-};
+var enableContinuousListenCheckbox = document.getElementById('enableContinuousListen');
+bindSetting('enableContinuousListen', enableContinuousListenCheckbox);
 
+var enableAutoInvokeCheckbox = document.getElementById('enableAutoInvoke');
+bindSetting('enableAutoInvoke', enableAutoInvokeCheckbox);
+
+var forceSmartSpeakerCheckbox = document.getElementById('forceSmartSpeaker');
+bindSetting('forceSmartSpeaker', forceSmartSpeakerCheckbox);
