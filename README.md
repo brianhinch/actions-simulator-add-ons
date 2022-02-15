@@ -25,3 +25,11 @@
 
 ### Continuous listen mode
 Normally, the Actions Simulator will only monitor the microphone for a short period after you click the mic button with the mouse. The continuous listen mode add-on forces the simulator to listen without the need to click the button.
+
+### Auto-invoke
+Auto-invoke will attempt to automatically invoke your agent any time it stops.
+
+### Force smart speaker mode
+Normally, when you start the simulator it will default to simulating smart display. Force smart speaker mode will automatically switch this to smart speaker mode.
+
+
