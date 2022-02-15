@@ -8,10 +8,8 @@ const handlers = {
         // console.debug('enableContinuousListen: Checking simulator state...');
         const closeMicButton = $('div[ng-show="$ctrl.micOpen"]');
         if (closeMicButton?.length <= 0 || closeMicButton?.[0]?.ariaHidden == 'true') {
-            // console.debug('simulator mic is in standby mode');
+            console.debug('simulator mic is in standby mode, switching to listen mode...');
             $('button[aria-label="Speak your query"]').click();
-        } else {
-            console.debug('simulator mic is listening');
         }
     },
     enableAutoInvoke: function () {
@@ -25,11 +23,13 @@ const handlers = {
                     const found = pattern.exec(item.textContent);
                     console.debug(found[0]);
                     const chipButton = $('div:contains(' + found + ') ~ button.fb-chip-action');
-                    if (chipButton) chipButton.click();
+                    if (chipButton) {
+                        console.debug('simulator is not running an agent, invoking...')
+                        chipButton.click();
+                    }
                 }
             }
         } else {
-            console.debug('simulator is running an agent');
             enableAutoInvokeChipClicked = false;
             forceSmartSpeakerOptionClicked = false;
         }
@@ -37,6 +37,7 @@ const handlers = {
     forceSmartSpeaker: function () {
         const surfaceSmartSpeakerOption = $('div.fb-option-single-select-item:contains("Speaker (e.g. Google Home)")');
         if (surfaceSmartSpeakerOption?.length > 0 && !forceSmartSpeakerOptionClicked) {
+            console.debug('simulator is not in smart speaker mode, switching...')
             surfaceSmartSpeakerOption.click();
             forceSmartSpeakerOptionClicked = true;
         } else {
@@ -57,7 +58,14 @@ let hIntervals = {};
 const start = function (key) {
     console.debug(`Actions Simulator Add-ons: start: ${key}`);
     stop(key);
-    hIntervals[key] = setInterval(handlers[key], POLLING_INTERVAL);
+    hIntervals[key] = setInterval(function () {
+        // make sure we're not waiting for deployment
+        if ($('span:contains(" Your preview is being updated... ")')?.length > 0) {
+            console.debug('Actions Simulator Add-ons: skipping poll because deployment is in progress')
+            return;
+        }
+        if (handlers[key]) handlers[key]();
+    }, POLLING_INTERVAL);
 };
 
 const stop = function (key) {

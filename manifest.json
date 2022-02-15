@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Actions Simulator Add-ons",
   "description": "Enables various additional functionality for the Google Actions Simulator (see https://console.actions.google.com/).",
-  "version": "0.905",
+  "version": "0.95",
   "author": "brianhinch",
   "background": {
     "scripts": [
